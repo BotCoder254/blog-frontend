@@ -3,10 +3,14 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Sidebar from './Sidebar';
 import Header from './Header';
 import MobileNav from './MobileNav';
+import useGlobalKeyboard from '../../hooks/useGlobalKeyboard';
 
 const MainLayout = ({ children }) => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  
+  // Global keyboard shortcuts
+  useGlobalKeyboard();
 
   return (
     <div className="min-h-screen bg-light-bg dark:bg-dark-bg">

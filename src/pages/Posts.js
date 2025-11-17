@@ -26,7 +26,7 @@ const Posts = () => {
   const [statusFilter, setStatusFilter] = useState('all');
 
   const { data: postsData, isLoading } = useQuery({
-    queryKey: ['posts', currentTenant?.id, statusFilter, searchParams.get('tag'), searchParams.get('category')],
+    queryKey: ['posts', currentTenant?.id, statusFilter, searchParams.get('tag'), searchParams.get('category'), searchParams.get('author')],
     queryFn: () => {
       const params = {};
       if (statusFilter !== 'all') {
@@ -37,6 +37,9 @@ const Posts = () => {
       }
       if (searchParams.get('category')) {
         params.category = searchParams.get('category');
+      }
+      if (searchParams.get('author')) {
+        params.author = searchParams.get('author');
       }
       return apiService.getPosts(currentTenant.id, params);
     },
@@ -89,6 +92,7 @@ const Posts = () => {
             <p className="text-gray-600 dark:text-gray-400 mt-1">
               {searchParams.get('tag') ? `Tagged with "${searchParams.get('tag')}"` :
                searchParams.get('category') ? `Category: ${searchParams.get('category')}` :
+               searchParams.get('author') ? `Posts by ${searchParams.get('author')}` :
                'Manage your blog posts and content'}
             </p>
           </div>

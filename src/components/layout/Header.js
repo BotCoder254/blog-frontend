@@ -1,7 +1,6 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { motion } from 'framer-motion';
 import { 
-  Search, 
   Bell, 
   Menu, 
   Sun, 
@@ -11,9 +10,10 @@ import {
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useNavigate } from 'react-router-dom';
+import SearchInput from '../SearchInput';
+import MobileSearch from '../MobileSearch';
 
 const Header = ({ onMobileMenuToggle, isMobile }) => {
-  const [searchQuery, setSearchQuery] = useState('');
   const { user, currentTenant } = useAuth();
   const { isDark, toggleTheme } = useTheme();
   const navigate = useNavigate();
@@ -48,29 +48,15 @@ const Header = ({ onMobileMenuToggle, isMobile }) => {
 
             {/* Search Bar - Hidden on mobile */}
             {!isMobile && (
-              <div className="relative max-w-md w-full">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Search className="h-5 w-5 text-gray-400" />
-                </div>
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search posts, categories..."
-                  className="
-                    block w-full pl-10 pr-3 py-2 border border-light-border dark:border-dark-border
-                    rounded-lg bg-light-input dark:bg-dark-input
-                    text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400
-                    focus:ring-2 focus:ring-accent-primary/50 focus:border-accent-primary
-                    transition-colors duration-200
-                  "
-                />
-              </div>
+              <SearchInput className="max-w-md w-full" />
             )}
           </div>
 
           {/* Right Section */}
           <div className="flex items-center space-x-3">
+            {/* Mobile Search */}
+            {isMobile && <MobileSearch />}
+            
             {/* Create Post Button - Mobile */}
             {isMobile && (
               <motion.button

@@ -15,6 +15,7 @@ import CommentModeration from './pages/CommentModeration';
 import MediaLibrary from './pages/MediaLibrary';
 import TagsPage from './pages/TagsPage';
 import CategoriesPage from './pages/CategoriesPage';
+import SearchResults from './pages/SearchResults';
 import ProtectedRoute from './components/ProtectedRoute';
 import './index.css';
 
@@ -106,6 +107,14 @@ function App() {
                   element={
                     <ProtectedRoute>
                       <CategoriesPage />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/search" 
+                  element={
+                    <ProtectedRoute>
+                      <SearchResults />
                     </ProtectedRoute>
                   } 
                 />
