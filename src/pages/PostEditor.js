@@ -192,18 +192,20 @@ const PostEditor = () => {
   return (
     <MainLayout>
       <div className="w-full">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6 px-2">
-          <div className="flex items-center space-x-4">
+        {/* Mobile-Responsive Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 px-2">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
             <Button
               variant="ghost"
               onClick={() => navigate('/posts')}
+              className="self-start"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Posts
+              <span className="hidden sm:inline">Back to Posts</span>
+              <span className="sm:hidden">Back</span>
             </Button>
             
-            <div className="flex items-center space-x-4 text-sm text-gray-500 dark:text-gray-400">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm text-gray-500 dark:text-gray-400">
               {saveStatus === 'saving' && (
                 <div className="flex items-center space-x-2">
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-accent-primary"></div>
@@ -213,7 +215,8 @@ const PostEditor = () => {
               {saveStatus === 'saved' && lastSaved && (
                 <div className="flex items-center space-x-2">
                   <CheckCircle className="w-4 h-4 text-accent-success" />
-                  <span>Saved {Math.floor((new Date() - lastSaved) / 1000)}s ago</span>
+                  <span className="hidden sm:inline">Saved {Math.floor((new Date() - lastSaved) / 1000)}s ago</span>
+                  <span className="sm:hidden">Saved</span>
                 </div>
               )}
               {saveStatus === 'error' && (
@@ -226,7 +229,7 @@ const PostEditor = () => {
               {/* Content Size Indicator */}
               {formData.bodyHtml && (
                 <div className="flex items-center space-x-1">
-                  <span>Size:</span>
+                  <span className="hidden sm:inline">Size:</span>
                   <span className={`font-medium ${
                     new Blob([formData.bodyHtml]).size > 4 * 1024 * 1024 
                       ? 'text-accent-warning' 
@@ -239,37 +242,45 @@ const PostEditor = () => {
             </div>
           </div>
 
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center gap-2 sm:gap-3 overflow-x-auto">
             <Button
               variant="outline"
               onClick={() => setShowPreview(!showPreview)}
+              size="sm"
+              className="whitespace-nowrap"
             >
-              <Eye className="w-4 h-4 mr-2" />
-              {showPreview ? 'Edit' : 'Preview'}
+              <Eye className="w-4 h-4 sm:mr-2" />
+              <span className="hidden sm:inline">{showPreview ? 'Edit' : 'Preview'}</span>
             </Button>
             
             <Button
               variant="outline"
               onClick={handleSave}
               loading={autoSaveMutation.isPending}
+              size="sm"
+              className="whitespace-nowrap"
             >
-              <Save className="w-4 h-4 mr-2" />
-              Save Draft
+              <Save className="w-4 h-4 sm:mr-2" />
+              <span className="hidden sm:inline">Save Draft</span>
+              <span className="sm:hidden">Save</span>
             </Button>
             
             <Button
               onClick={handlePublish}
               loading={publishMutation.isPending}
+              size="sm"
+              className="whitespace-nowrap"
             >
-              <Send className="w-4 h-4 mr-2" />
-              Publish
+              <Send className="w-4 h-4 sm:mr-2" />
+              <span className="hidden sm:inline">Publish</span>
+              <span className="sm:hidden">Publish</span>
             </Button>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 xl:grid-cols-5 gap-6 px-2">
-          {/* Metadata Sidebar */}
-          <div className="xl:col-span-1 space-y-4">
+        <div className="grid grid-cols-1 lg:grid-cols-4 xl:grid-cols-5 gap-4 lg:gap-6 px-2">
+          {/* Mobile-Responsive Metadata Sidebar */}
+          <div className="lg:col-span-1 xl:col-span-1 space-y-4">
             <div className="bg-light-surface1 dark:bg-dark-surface1 rounded-xl p-4 border border-light-border dark:border-dark-border">
               <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-3">
                 Post Settings
@@ -281,6 +292,7 @@ const PostEditor = () => {
                   value={formData.title}
                   onChange={(e) => handleInputChange('title', e.target.value)}
                   placeholder="Enter post title..."
+                  className="text-sm sm:text-base"
                 />
                 
                 <Input
@@ -288,6 +300,7 @@ const PostEditor = () => {
                   value={formData.slug}
                   onChange={(e) => handleInputChange('slug', e.target.value)}
                   placeholder="post-url-slug"
+                  className="text-sm sm:text-base"
                 />
                 
                 <div>
@@ -299,7 +312,7 @@ const PostEditor = () => {
                     onChange={(e) => handleInputChange('excerpt', e.target.value)}
                     placeholder="Brief description of your post..."
                     rows={3}
-                    className="w-full px-3 py-2 border border-light-border dark:border-dark-border rounded-lg bg-light-input dark:bg-dark-input text-gray-900 dark:text-white resize-none"
+                    className="w-full px-3 py-2 border border-light-border dark:border-dark-border rounded-lg bg-light-input dark:bg-dark-input text-gray-900 dark:text-white resize-none text-sm sm:text-base"
                   />
                 </div>
                 
@@ -310,15 +323,17 @@ const PostEditor = () => {
                     onChange={(e) => handleInputChange('coverImageUrl', e.target.value)}
                     placeholder="https://example.com/image.jpg"
                     icon={Image}
+                    className="text-sm sm:text-base"
                   />
                   <Button
                     size="sm"
                     variant="outline"
                     onClick={() => setShowImageModal(true)}
-                    className="mt-2 w-full"
+                    className="mt-2 w-full text-xs sm:text-sm"
                   >
                     <Image className="w-4 h-4 mr-2" />
-                    Choose from Media Library
+                    <span className="hidden sm:inline">Choose from Media Library</span>
+                    <span className="sm:hidden">Media Library</span>
                   </Button>
                 </div>
               </div>
@@ -357,8 +372,8 @@ const PostEditor = () => {
             </div>
           </div>
 
-          {/* Editor */}
-          <div className="xl:col-span-4">
+          {/* Mobile-Responsive Editor */}
+          <div className="lg:col-span-3 xl:col-span-4">
             <AnimatePresence mode="wait">
               {showPreview ? (
                 <motion.div
@@ -366,14 +381,14 @@ const PostEditor = () => {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  className="bg-light-surface1 dark:bg-dark-surface1 rounded-xl p-8 border border-light-border dark:border-dark-border"
+                  className="bg-light-surface1 dark:bg-dark-surface1 rounded-xl p-4 sm:p-6 lg:p-8 border border-light-border dark:border-dark-border"
                 >
-                  <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
+                  <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white mb-4">
                     {formData.title || 'Untitled Post'}
                   </h1>
                   
                   {formData.excerpt && (
-                    <p className="text-lg text-gray-600 dark:text-gray-400 mb-6">
+                    <p className="text-base sm:text-lg text-gray-600 dark:text-gray-400 mb-6">
                       {formData.excerpt}
                     </p>
                   )}
@@ -382,7 +397,7 @@ const PostEditor = () => {
                     <img
                       src={formData.coverImageUrl}
                       alt="Cover"
-                      className="w-full h-64 object-cover rounded-lg mb-6"
+                      className="w-full h-48 sm:h-64 object-cover rounded-lg mb-6"
                     />
                   )}
                   
