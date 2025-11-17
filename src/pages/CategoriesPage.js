@@ -15,19 +15,24 @@ const CategoriesPage = () => {
     'Travel', 'Food', 'Health', 'Education', 'Entertainment'
   ];
 
+  const tenantId = user?.currentTenant?.id || user?.currentTenantId;
+  
   const { data: posts } = useQuery({
-    queryKey: ['posts', user?.currentTenantId],
+    queryKey: ['posts', tenantId],
     queryFn: async () => {
-      const response = await fetch(`/api/tenants/${user.currentTenantId}/posts`, {
+      const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080';
+      const BASE_URL = API_BASE_URL.endsWith('/api') ? API_BASE_URL : `${API_BASE_URL}/api`;
+      
+      const response = await fetch(`${BASE_URL}/tenants/${tenantId}/posts`, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`
         }
       });
       
       if (!response.ok) throw new Error('Failed to fetch posts');
       return response.json();
     },
-    enabled: !!user?.currentTenantId
+    enabled: !!tenantId
   });
 
   // Count posts per category

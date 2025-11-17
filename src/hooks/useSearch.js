@@ -20,12 +20,15 @@ const useSearch = (initialQuery = '') => {
   const { data: results, isLoading, error } = useQuery({
     queryKey: ['search', debouncedQuery],
     queryFn: async () => {
-      if (!debouncedQuery.trim()) return null;
+      if (!debouncedQuery.trim()) {
+        return { posts: [], tags: [], authors: [], hasMore: false };
+      }
       const response = await api.get(`/search?q=${encodeURIComponent(debouncedQuery)}&limit=5`);
-      return response.data;
+      return response.data || { posts: [], tags: [], authors: [], hasMore: false };
     },
     enabled: !!debouncedQuery.trim(),
     staleTime: 30000, // 30 seconds
+    initialData: { posts: [], tags: [], authors: [], hasMore: false }
   });
 
   const clearSearch = useCallback(() => {

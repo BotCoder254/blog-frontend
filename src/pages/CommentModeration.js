@@ -8,14 +8,16 @@ const CommentModeration = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [currentPage, setCurrentPage] = useState(0);
+  
+  const tenantId = user?.currentTenant?.id || user?.currentTenantId;
 
   const { data: commentsData, isLoading } = useQuery({
-    queryKey: ['pendingComments', user?.currentTenantId, currentPage],
+    queryKey: ['pendingComments', tenantId, currentPage],
     queryFn: async () => {
       const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080';
       const BASE_URL = API_BASE_URL.endsWith('/api') ? API_BASE_URL : `${API_BASE_URL}/api`;
       
-      const response = await fetch(`${BASE_URL}/tenants/${user.currentTenantId}/comments?page=${currentPage}&size=10`, {
+      const response = await fetch(`${BASE_URL}/tenants/${tenantId}/comments?page=${currentPage}&size=10`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('authToken')}`
         }
@@ -23,7 +25,7 @@ const CommentModeration = () => {
       if (!response.ok) throw new Error('Failed to fetch comments');
       return response.json();
     },
-    enabled: !!user?.currentTenantId
+    enabled: !!tenantId
   });
 
   const approveMutation = useMutation({
@@ -31,7 +33,7 @@ const CommentModeration = () => {
       const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080';
       const BASE_URL = API_BASE_URL.endsWith('/api') ? API_BASE_URL : `${API_BASE_URL}/api`;
       
-      const response = await fetch(`${BASE_URL}/tenants/${user.currentTenantId}/comments/${commentId}/approve`, {
+      const response = await fetch(`${BASE_URL}/tenants/${tenantId}/comments/${commentId}/approve`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('authToken')}`
@@ -49,7 +51,7 @@ const CommentModeration = () => {
       const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080';
       const BASE_URL = API_BASE_URL.endsWith('/api') ? API_BASE_URL : `${API_BASE_URL}/api`;
       
-      const response = await fetch(`${BASE_URL}/tenants/${user.currentTenantId}/comments/${commentId}/reject`, {
+      const response = await fetch(`${BASE_URL}/tenants/${tenantId}/comments/${commentId}/reject`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('authToken')}`
@@ -67,7 +69,7 @@ const CommentModeration = () => {
       const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080';
       const BASE_URL = API_BASE_URL.endsWith('/api') ? API_BASE_URL : `${API_BASE_URL}/api`;
       
-      const response = await fetch(`${BASE_URL}/tenants/${user.currentTenantId}/comments/${commentId}`, {
+      const response = await fetch(`${BASE_URL}/tenants/${tenantId}/comments/${commentId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('authToken')}`

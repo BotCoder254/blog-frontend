@@ -10,23 +10,28 @@ const TagsPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '');
 
-  const { data: tags, isLoading } = useQuery({
-    queryKey: ['tags', user?.currentTenantId, searchQuery],
+  const tenantId = user?.currentTenant?.id || user?.currentTenantId;
+  
+  const { data: tags, isLoading, error } = useQuery({
+    queryKey: ['tags', tenantId, searchQuery],
     queryFn: async () => {
+      const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080';
+      const BASE_URL = API_BASE_URL.endsWith('/api') ? API_BASE_URL : `${API_BASE_URL}/api`;
+      
       const params = new URLSearchParams();
       if (searchQuery) params.append('query', searchQuery);
       params.append('limit', '50');
       
-      const response = await fetch(`/api/tenants/${user.currentTenantId}/tags?${params}`, {
+      const response = await fetch(`${BASE_URL}/tenants/${tenantId}/tags?${params}`, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`
         }
       });
       
       if (!response.ok) throw new Error('Failed to fetch tags');
       return response.json();
     },
-    enabled: !!user?.currentTenantId
+    enabled: !!tenantId
   });
 
   const handleSearch = (e) => {
@@ -91,6 +96,12 @@ const TagsPage = () => {
               <p className="text-gray-600 dark:text-gray-400">
                 {searchQuery ? 'Try a different search term' : 'Create your first post with tags to see them here'}
               </p>
+              {error && (
+                <div className="mt-4 p-3 bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300 rounded-lg text-sm">
+                  Error: {error.message}
+                </div>
+              )}
+
             </div>
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-3">

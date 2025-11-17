@@ -13,10 +13,12 @@ export const useNotifications = () => {
 };
 
 export const NotificationProvider = ({ children }) => {
-  const { user, currentTenant } = useAuth();
+  const { user } = useAuth();
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
+  
+  const tenantId = user?.currentTenant?.id || user?.currentTenantId;
 
   // Handle new notification received via WebSocket
   const handleNotificationReceived = useCallback((notification) => {
@@ -37,7 +39,7 @@ export const NotificationProvider = ({ children }) => {
 
   // Connect to WebSocket when user is authenticated
   useEffect(() => {
-    if (user?.id && currentTenant?.id) {
+    if (user?.id && tenantId) {
       notificationService.connect(user.id, handleNotificationReceived);
       loadRecentNotifications();
       loadUnreadCount();
@@ -46,7 +48,7 @@ export const NotificationProvider = ({ children }) => {
         notificationService.disconnect();
       };
     }
-  }, [user?.id, currentTenant?.id, handleNotificationReceived]);
+  }, [user?.id, tenantId, handleNotificationReceived]);
 
   // Request notification permission
   useEffect(() => {
@@ -56,35 +58,43 @@ export const NotificationProvider = ({ children }) => {
   }, []);
 
   const loadRecentNotifications = async () => {
-    if (!currentTenant?.id) return;
+    if (!tenantId) {
+      console.log('No tenantId available for loading notifications');
+      return;
+    }
     
+    console.log('Loading recent notifications for tenant:', tenantId);
     try {
       setIsLoading(true);
-      const data = await notificationService.getRecentNotifications(currentTenant.id);
-      setNotifications(data);
+      const data = await notificationService.getRecentNotifications(tenantId);
+      console.log('Loaded notifications:', data);
+      console.log('Setting notifications state to:', data || []);
+      setNotifications(data || []);
     } catch (error) {
       console.error('Failed to load notifications:', error);
+      setNotifications([]);
     } finally {
       setIsLoading(false);
     }
   };
 
   const loadUnreadCount = async () => {
-    if (!currentTenant?.id) return;
+    if (!tenantId) return;
     
     try {
-      const count = await notificationService.getUnreadCount(currentTenant.id);
-      setUnreadCount(count);
+      const count = await notificationService.getUnreadCount(tenantId);
+      setUnreadCount(count || 0);
     } catch (error) {
       console.error('Failed to load unread count:', error);
+      setUnreadCount(0);
     }
   };
 
   const markAsRead = async (notificationId) => {
-    if (!currentTenant?.id) return;
+    if (!tenantId) return;
     
     try {
-      await notificationService.markAsRead(currentTenant.id, notificationId);
+      await notificationService.markAsRead(tenantId, notificationId);
       
       setNotifications(prev => 
         prev.map(notification => 
@@ -101,10 +111,10 @@ export const NotificationProvider = ({ children }) => {
   };
 
   const markAllAsRead = async () => {
-    if (!currentTenant?.id) return;
+    if (!tenantId) return;
     
     try {
-      await notificationService.markAllAsRead(currentTenant.id);
+      await notificationService.markAllAsRead(tenantId);
       
       setNotifications(prev => 
         prev.map(notification => ({ 
@@ -121,10 +131,10 @@ export const NotificationProvider = ({ children }) => {
   };
 
   const deleteNotification = async (notificationId) => {
-    if (!currentTenant?.id) return;
+    if (!tenantId) return;
     
     try {
-      await notificationService.deleteNotification(currentTenant.id, notificationId);
+      await notificationService.deleteNotification(tenantId, notificationId);
       
       const notification = notifications.find(n => n.id === notificationId);
       setNotifications(prev => prev.filter(n => n.id !== notificationId));
@@ -138,10 +148,10 @@ export const NotificationProvider = ({ children }) => {
   };
 
   const deleteAllNotifications = async () => {
-    if (!currentTenant?.id) return;
+    if (!tenantId) return;
     
     try {
-      await notificationService.deleteAllNotifications(currentTenant.id);
+      await notificationService.deleteAllNotifications(tenantId);
       setNotifications([]);
       setUnreadCount(0);
     } catch (error) {

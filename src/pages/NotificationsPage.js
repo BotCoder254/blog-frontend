@@ -23,26 +23,25 @@ import notificationService from '../services/notificationService';
 
 const NotificationsPage = () => {
   const navigate = useNavigate();
-  const { currentTenant } = useAuth();
-  const { markAsRead, markAllAsRead, deleteNotification, deleteAllNotifications } = useNotifications();
+  const { user } = useAuth();
+  const { notifications: contextNotifications, isLoading, markAsRead, markAllAsRead, deleteNotification, deleteAllNotifications, loadRecentNotifications } = useNotifications();
+  
+  const tenantId = user?.currentTenant?.id || user?.currentTenantId;
   
   const [filter, setFilter] = useState('all'); // all, unread, read
   const [selectedNotifications, setSelectedNotifications] = useState(new Set());
   const [page, setPage] = useState(0);
 
-  const { data: notificationsData, isLoading, refetch } = useQuery({
-    queryKey: ['notifications', currentTenant?.id, page, filter],
-    queryFn: async () => {
-      if (filter === 'unread') {
-        return { content: await notificationService.getUnreadNotifications(currentTenant.id), totalPages: 1 };
-      }
-      return await notificationService.getNotifications(currentTenant.id, page, 20);
-    },
-    enabled: !!currentTenant?.id
-  });
-
-  const notifications = notificationsData?.content || [];
-  const totalPages = notificationsData?.totalPages || 1;
+  // Use notifications from context instead of separate API call
+  const notifications = contextNotifications || [];
+  const totalPages = 1; // For now, since we're using context notifications
+  
+  console.log('NotificationsPage - tenantId:', tenantId);
+  console.log('NotificationsPage - contextNotifications:', contextNotifications);
+  console.log('NotificationsPage - notifications:', notifications);
+  console.log('NotificationsPage - filter:', filter);
+  
+  const refetch = loadRecentNotifications;
 
   const getNotificationIcon = (type) => {
     switch (type) {
@@ -103,7 +102,6 @@ const NotificationsPage = () => {
   const handleNotificationClick = async (notification) => {
     if (!notification.read) {
       await markAsRead(notification.id);
-      refetch();
     }
     
     if (notification.actionUrl) {
@@ -137,14 +135,12 @@ const NotificationsPage = () => {
     
     await Promise.all(promises);
     setSelectedNotifications(new Set());
-    refetch();
   };
 
   const handleBulkDelete = async () => {
     const promises = Array.from(selectedNotifications).map(id => deleteNotification(id));
     await Promise.all(promises);
     setSelectedNotifications(new Set());
-    refetch();
   };
 
   const filteredNotifications = notifications.filter(notification => {
@@ -152,6 +148,9 @@ const NotificationsPage = () => {
     if (filter === 'read') return notification.read;
     return true;
   });
+  
+  console.log('NotificationsPage - filteredNotifications:', filteredNotifications);
+  console.log('NotificationsPage - filteredNotifications.length:', filteredNotifications.length);
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
@@ -202,10 +201,7 @@ const NotificationsPage = () => {
             
             {unreadCount > 0 && (
               <button
-                onClick={async () => {
-                  await markAllAsRead();
-                  refetch();
-                }}
+                onClick={markAllAsRead}
                 className="px-4 py-2 text-sm bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors flex items-center space-x-2"
               >
                 <CheckCheck className="w-4 h-4" />
