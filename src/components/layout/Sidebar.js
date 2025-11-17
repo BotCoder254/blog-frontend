@@ -44,7 +44,6 @@ const Sidebar = ({ collapsed, onToggleCollapse, isMobile, onClose }) => {
       items: [
         { icon: MessageCircle, label: 'Comments', path: '/comments' },
         { icon: Bell, label: 'Notifications', path: '/notifications' },
-        { icon: Users, label: 'Users', path: '/users', adminOnly: true },
       ]
     },
     {

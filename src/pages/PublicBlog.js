@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Link, useSearchParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Search, 
   Calendar, 
@@ -17,7 +17,9 @@ import {
   MessageCircle,
   Heart,
   Share2,
-  Bookmark
+  Bookmark,
+  Play,
+  Pause
 } from 'lucide-react';
 import PublicHeader from '../components/PublicHeader';
 
@@ -36,10 +38,43 @@ const PublicBlog = () => {
   const [selectedTag, setSelectedTag] = useState(searchParams.get('tag') || '');
   const [tenantData, setTenantData] = useState(null);
   const [seoSettings, setSeoSettings] = useState(null);
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const [isAutoPlaying, setIsAutoPlaying] = useState(true);
+  const sliderRef = useRef(null);
+  const autoPlayRef = useRef(null);
 
   useEffect(() => {
     fetchAllData();
   }, [tenantSlug, currentPage, searchQuery, selectedTag]);
+  
+  // Auto-play slider
+  useEffect(() => {
+    if (isAutoPlaying && trendingPosts.length > 1) {
+      autoPlayRef.current = setInterval(() => {
+        setCurrentSlide(prev => (prev + 1) % Math.min(trendingPosts.length, 5));
+      }, 4000);
+    }
+    return () => {
+      if (autoPlayRef.current) {
+        clearInterval(autoPlayRef.current);
+      }
+    };
+  }, [isAutoPlaying, trendingPosts.length]);
+  
+  // Real-time view count updates
+  useEffect(() => {
+    const interval = setInterval(() => {
+      // Simulate real-time view updates
+      setPosts(prevPosts => 
+        prevPosts.map(post => ({
+          ...post,
+          views: (post.views || 0) + Math.floor(Math.random() * 3)
+        }))
+      );
+    }, 30000); // Update every 30 seconds
+    
+    return () => clearInterval(interval);
+  }, []);
 
   const fetchAllData = async () => {
     try {
@@ -150,6 +185,18 @@ const PublicBlog = () => {
     setCurrentPage(0);
     setSearchParams({});
   };
+  
+  const nextSlide = () => {
+    setCurrentSlide(prev => (prev + 1) % Math.min(trendingPosts.length, 5));
+  };
+  
+  const prevSlide = () => {
+    setCurrentSlide(prev => (prev - 1 + Math.min(trendingPosts.length, 5)) % Math.min(trendingPosts.length, 5));
+  };
+  
+  const toggleAutoPlay = () => {
+    setIsAutoPlaying(!isAutoPlaying);
+  };
 
   if (loading) {
     return (
@@ -206,81 +253,156 @@ const PublicBlog = () => {
       <div className="min-h-screen bg-light-bg dark:bg-dark-bg">
         <PublicHeader tenantSlug={tenantSlug} />
         
-        {/* Hero Section - Featured Story */}
-        {featuredPost && (
-          <section className="relative bg-light-surface1 dark:bg-dark-surface1 border-b border-light-border dark:border-dark-border">
-            <div className="max-w-7xl mx-auto px-4 py-12">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
-                <motion.div
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  className="space-y-6"
-                >
-                  <div className="flex items-center space-x-2">
-                    <Star className="w-5 h-5 text-accent-primary" />
-                    <span className="text-sm font-medium text-accent-primary uppercase tracking-wide">
-                      Featured Story
-                    </span>
-                  </div>
-                  
-                  <Link to={`/blog/${tenantSlug}/posts/${featuredPost.slug}`}>
-                    <h1 className="text-4xl lg:text-5xl font-bold text-gray-900 dark:text-white leading-tight hover:text-accent-primary transition-colors">
-                      {featuredPost.title}
-                    </h1>
-                  </Link>
-                  
-                  {featuredPost.excerpt && (
-                    <p className="text-lg text-gray-600 dark:text-gray-400 leading-relaxed">
-                      {featuredPost.excerpt}
-                    </p>
-                  )}
-                  
-                  <div className="flex items-center space-x-6 text-sm text-gray-500 dark:text-gray-400">
-                    <span className="flex items-center space-x-1">
-                      <User className="w-4 h-4" />
-                      <span>{typeof featuredPost.author === 'string' ? featuredPost.author : `${featuredPost.author?.firstName || ''} ${featuredPost.author?.lastName || ''}`.trim() || 'Anonymous'}</span>
-                    </span>
-                    <span className="flex items-center space-x-1">
-                      <Calendar className="w-4 h-4" />
-                      <span>{formatDate(featuredPost.publishedAt)}</span>
-                    </span>
-                    <span className="flex items-center space-x-1">
-                      <Clock className="w-4 h-4" />
-                      <span>{calculateReadTime(featuredPost.content)} min read</span>
-                    </span>
-                  </div>
-                  
-                  <Link
-                    to={`/blog/${tenantSlug}/posts/${featuredPost.slug}`}
-                    className="inline-flex items-center px-6 py-3 bg-accent-primary text-white rounded-lg hover:bg-accent-primary/90 transition-colors font-medium"
-                  >
-                    Read Full Story
-                    <ChevronRight className="w-4 h-4 ml-2" />
-                  </Link>
-                </motion.div>
+        {/* Modern Hero Slider */}
+        {trendingPosts.length > 0 && (
+          <section className="relative bg-gradient-to-br from-accent-primary/5 to-accent-secondary/5 border-b border-light-border dark:border-dark-border overflow-hidden">
+            <div className="max-w-7xl mx-auto px-4 py-8 sm:py-12">
+              <div className="relative">
+                {/* Slider Container */}
+                <div className="relative h-[400px] sm:h-[500px] lg:h-[600px] rounded-2xl overflow-hidden" ref={sliderRef}>
+                  <AnimatePresence mode="wait">
+                    <motion.div
+                      key={currentSlide}
+                      initial={{ opacity: 0, x: 300 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -300 }}
+                      transition={{ duration: 0.5, ease: "easeInOut" }}
+                      className="absolute inset-0"
+                    >
+                      {trendingPosts[currentSlide] && (
+                        <div className="relative h-full">
+                          {/* Background Image with Fallback */}
+                          <div className="absolute inset-0">
+                            {trendingPosts[currentSlide].featuredImage ? (
+                              <img
+                                src={trendingPosts[currentSlide].featuredImage}
+                                alt={trendingPosts[currentSlide].title}
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                  e.target.style.display = 'none';
+                                  e.target.nextSibling.style.display = 'block';
+                                }}
+                              />
+                            ) : null}
+                            {/* Default Background */}
+                            <div 
+                              className={`w-full h-full bg-gradient-to-br from-accent-primary via-accent-secondary to-purple-600 ${trendingPosts[currentSlide].featuredImage ? 'hidden' : 'block'}`}
+                              style={{
+                                backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.1'%3E%3Ccircle cx='30' cy='30' r='4'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+                                backgroundSize: '30px 30px'
+                              }}
+                            ></div>
+                            {/* Enhanced Overlay for Better Text Visibility */}
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-black/20"></div>
+                            <div className="absolute inset-0 bg-black/30"></div>
+                          </div>
+                          
+                          {/* Content Overlay with Enhanced Visibility */}
+                          <div className="relative h-full flex items-end p-6 sm:p-8 lg:p-12">
+                            <div className="max-w-2xl">
+                              {/* Badge with Background */}
+                              <div className="flex items-center space-x-2 mb-4">
+                                <div className="flex items-center space-x-2 bg-accent-primary/90 backdrop-blur-sm px-3 py-1 rounded-full">
+                                  <TrendingUp className="w-4 h-4 text-white" />
+                                  <span className="text-sm font-medium text-white uppercase tracking-wide">
+                                    Trending #{currentSlide + 1}
+                                  </span>
+                                </div>
+                              </div>
+                              
+                              {/* Title with Text Shadow */}
+                              <Link to={`/blog/${tenantSlug}/posts/${trendingPosts[currentSlide].slug}`}>
+                                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold leading-tight text-white hover:text-accent-primary transition-colors mb-4" style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.8)' }}>
+                                  {trendingPosts[currentSlide].title}
+                                </h1>
+                              </Link>
+                              
+                              {/* Excerpt with Background */}
+                              {trendingPosts[currentSlide].excerpt && (
+                                <div className="bg-black/40 backdrop-blur-sm rounded-lg p-4 mb-6">
+                                  <p className="text-white text-base sm:text-lg leading-relaxed line-clamp-2">
+                                    {trendingPosts[currentSlide].excerpt}
+                                  </p>
+                                </div>
+                              )}
+                              
+                              {/* Meta Info with Background */}
+                              <div className="flex flex-wrap items-center gap-3 mb-6">
+                                <div className="flex items-center space-x-1 bg-white/20 backdrop-blur-sm px-3 py-1 rounded-full text-white text-sm">
+                                  <User className="w-4 h-4" />
+                                  <span>{typeof trendingPosts[currentSlide].author === 'string' ? trendingPosts[currentSlide].author : `${trendingPosts[currentSlide].author?.firstName || ''} ${trendingPosts[currentSlide].author?.lastName || ''}`.trim() || 'Anonymous'}</span>
+                                </div>
+                                <div className="flex items-center space-x-1 bg-white/20 backdrop-blur-sm px-3 py-1 rounded-full text-white text-sm">
+                                  <Eye className="w-4 h-4" />
+                                  <span>{(trendingPosts[currentSlide].views || 0).toLocaleString()} views</span>
+                                </div>
+                                <div className="flex items-center space-x-1 bg-white/20 backdrop-blur-sm px-3 py-1 rounded-full text-white text-sm">
+                                  <Clock className="w-4 h-4" />
+                                  <span>{calculateReadTime(trendingPosts[currentSlide].content)} min read</span>
+                                </div>
+                              </div>
+                              
+                              {/* CTA Button */}
+                              <Link
+                                to={`/blog/${tenantSlug}/posts/${trendingPosts[currentSlide].slug}`}
+                                className="inline-flex items-center px-6 py-3 bg-accent-primary hover:bg-accent-primary/90 text-white rounded-lg transition-all duration-300 font-medium shadow-lg hover:shadow-xl transform hover:scale-105"
+                              >
+                                Read Article
+                                <ChevronRight className="w-4 h-4 ml-2" />
+                              </Link>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </motion.div>
+                  </AnimatePresence>
+                </div>
                 
-                {featuredPost.featuredImage && (
-                  <motion.div
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    className="relative"
+                {/* Slider Controls */}
+                <div className="absolute top-1/2 -translate-y-1/2 left-4 right-4 flex justify-between pointer-events-none">
+                  <button
+                    onClick={prevSlide}
+                    className="w-10 h-10 sm:w-12 sm:h-12 bg-white/20 backdrop-blur-sm text-white rounded-full flex items-center justify-center hover:bg-white/30 transition-colors pointer-events-auto"
                   >
-                    <img
-                      src={featuredPost.featuredImage}
-                      alt={featuredPost.title}
-                      className="w-full h-80 lg:h-96 object-cover rounded-xl shadow-lg"
+                    <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" />
+                  </button>
+                  <button
+                    onClick={nextSlide}
+                    className="w-10 h-10 sm:w-12 sm:h-12 bg-white/20 backdrop-blur-sm text-white rounded-full flex items-center justify-center hover:bg-white/30 transition-colors pointer-events-auto"
+                  >
+                    <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
+                  </button>
+                </div>
+                
+                {/* Slider Indicators */}
+                <div className="absolute bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 flex items-center space-x-2">
+                  {trendingPosts.slice(0, 5).map((_, index) => (
+                    <button
+                      key={index}
+                      onClick={() => setCurrentSlide(index)}
+                      className={`w-2 h-2 sm:w-3 sm:h-3 rounded-full transition-colors ${
+                        index === currentSlide ? 'bg-accent-primary' : 'bg-white/50'
+                      }`}
                     />
-                  </motion.div>
-                )}
+                  ))}
+                  
+                  {/* Auto-play toggle */}
+                  <button
+                    onClick={toggleAutoPlay}
+                    className="ml-4 w-8 h-8 bg-white/20 backdrop-blur-sm text-white rounded-full flex items-center justify-center hover:bg-white/30 transition-colors"
+                  >
+                    {isAutoPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+                  </button>
+                </div>
               </div>
             </div>
           </section>
         )}
 
-        {/* Search Bar */}
+        {/* Mobile-Responsive Search Bar */}
         <section className="bg-light-surface1 dark:bg-dark-surface1 border-b border-light-border dark:border-dark-border">
-          <div className="max-w-7xl mx-auto px-4 py-6">
-            <form onSubmit={handleSearch} className="flex gap-4 max-w-2xl mx-auto">
+          <div className="max-w-7xl mx-auto px-4 py-4 sm:py-6">
+            <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-3 sm:gap-4 max-w-2xl mx-auto">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                 <input
@@ -288,19 +410,19 @@ const PublicBlog = () => {
                   placeholder="Search articles, topics, authors..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 border border-light-border dark:border-dark-border rounded-lg bg-light-input dark:bg-dark-input text-gray-900 dark:text-white focus:ring-2 focus:ring-accent-primary/50 focus:border-accent-primary transition-colors"
+                  className="w-full pl-10 pr-4 py-3 border border-light-border dark:border-dark-border rounded-lg bg-light-input dark:bg-dark-input text-gray-900 dark:text-white focus:ring-2 focus:ring-accent-primary/50 focus:border-accent-primary transition-colors text-sm sm:text-base"
                 />
               </div>
               <button
                 type="submit"
-                className="px-6 py-3 bg-accent-primary text-white rounded-lg hover:bg-accent-primary/90 transition-colors font-medium"
+                className="px-4 sm:px-6 py-3 bg-accent-primary text-white rounded-lg hover:bg-accent-primary/90 transition-colors font-medium text-sm sm:text-base whitespace-nowrap"
               >
                 Search
               </button>
             </form>
             
             {(searchQuery || selectedTag) && (
-              <div className="flex items-center justify-center gap-2 mt-4 text-sm">
+              <div className="flex flex-wrap items-center justify-center gap-2 mt-4 text-sm">
                 <Filter className="w-4 h-4 text-gray-400" />
                 <span className="text-gray-600 dark:text-gray-400">Active filters:</span>
                 {searchQuery && (
@@ -324,13 +446,13 @@ const PublicBlog = () => {
           </div>
         </section>
 
-        {/* Multi-Column Content Grid */}
-        <section className="max-w-7xl mx-auto px-4 py-12">
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+        {/* Mobile-Responsive Content Grid */}
+        <section className="max-w-7xl mx-auto px-4 py-8 sm:py-12">
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 lg:gap-8">
             {/* Main Content - Latest Posts */}
-            <div className="lg:col-span-2 space-y-8">
+            <div className="lg:col-span-2 space-y-6 sm:space-y-8">
               <div className="flex items-center justify-between">
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Latest Articles</h2>
+                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">Latest Articles</h2>
                 <div className="h-px bg-gradient-to-r from-accent-primary to-transparent flex-1 ml-4"></div>
               </div>
               
@@ -412,7 +534,7 @@ const PublicBlog = () => {
                           </span>
                           <span className="flex items-center space-x-1">
                             <Eye className="w-4 h-4" />
-                            <span>{post.views || 0} views</span>
+                            <span className="font-medium">{(post.views || 0).toLocaleString()} views</span>
                           </span>
                           <span className="flex items-center space-x-1">
                             <MessageCircle className="w-4 h-4" />

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { motion } from 'framer-motion';
@@ -17,10 +17,13 @@ import {
   Heart,
   MessageCircle,
   Copy,
-  Check
+  Check,
+  TrendingUp
 } from 'lucide-react';
 import CommentSection from '../components/CommentSection';
 import PublicHeader from '../components/PublicHeader';
+import SockJS from 'sockjs-client';
+import { Stomp } from '@stomp/stompjs';
 
 const PublicPost = () => {
   const { tenantSlug, slug } = useParams();
@@ -30,12 +33,71 @@ const PublicPost = () => {
   const [seoSettings, setSeoSettings] = useState(null);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
+  const [realTimeViews, setRealTimeViews] = useState(0);
+  const [isConnected, setIsConnected] = useState(false);
+  const stompClientRef = useRef(null);
 
+  const connectWebSocket = () => {
+    try {
+      const baseUrl = process.env.REACT_APP_API_URL || 'http://localhost:8080';
+      const wsUrl = baseUrl.endsWith('/api') ? `${baseUrl}/ws` : `${baseUrl}/api/ws`;
+      const socket = new SockJS(wsUrl);
+      const client = Stomp.over(socket);
+      
+      client.debug = () => {}; // Disable debug logging
+      
+      client.connect(
+        {},
+        () => {
+          console.log('WebSocket connected for real-time views');
+          setIsConnected(true);
+          stompClientRef.current = client;
+          
+          // Subscribe to post updates for this tenant
+          if (tenantData?.id) {
+            client.subscribe(`/topic/posts/${tenantData.id}`, (message) => {
+              const update = JSON.parse(message.body);
+              if (update.type === 'VIEW_UPDATE' && update.postId === post?.id) {
+                setRealTimeViews(update.views);
+              }
+            });
+          }
+        },
+        (error) => {
+          console.warn('WebSocket connection failed:', error);
+          setIsConnected(false);
+        }
+      );
+    } catch (error) {
+      console.warn('WebSocket initialization failed:', error);
+    }
+  };
+  
+  const disconnectWebSocket = () => {
+    if (stompClientRef.current) {
+      stompClientRef.current.disconnect();
+      stompClientRef.current = null;
+      setIsConnected(false);
+    }
+  };
+  
   useEffect(() => {
     fetchTenantData();
     fetchPost();
     fetchRelatedPosts();
+    connectWebSocket();
+    
+    return () => {
+      disconnectWebSocket();
+    };
   }, [tenantSlug, slug]);
+  
+  // Update real-time views when post loads
+  useEffect(() => {
+    if (post?.views) {
+      setRealTimeViews(post.views);
+    }
+  }, [post?.views]);
 
   const fetchTenantData = async () => {
     try {
@@ -280,7 +342,10 @@ const PublicPost = () => {
                             </span>
                             <span className="flex items-center space-x-1">
                               <Eye className="w-4 h-4" />
-                              <span>{post.views || 0} views</span>
+                              <span className="font-medium">{realTimeViews.toLocaleString()} views</span>
+                              {isConnected && (
+                                <TrendingUp className="w-3 h-3 text-accent-success animate-pulse" title="Live updates" />
+                              )}
                             </span>
                           </div>
                         </div>

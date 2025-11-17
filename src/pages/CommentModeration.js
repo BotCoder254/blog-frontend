@@ -1,17 +1,22 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Check, X, Trash2, MessageCircle, Clock } from 'lucide-react';
+import { Check, X, Trash2, MessageCircle, Clock, RefreshCw, AlertCircle } from 'lucide-react';
 import MainLayout from '../components/layout/MainLayout';
 import { useAuth } from '../contexts/AuthContext';
+import { useNotifications } from '../contexts/NotificationContext';
+import { useRealTime } from '../contexts/RealTimeContext';
 
 const CommentModeration = () => {
   const { user } = useAuth();
+  const { notifications } = useNotifications();
+  const { connected, addEventListener } = useRealTime();
   const queryClient = useQueryClient();
   const [currentPage, setCurrentPage] = useState(0);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   
   const tenantId = user?.currentTenant?.id || user?.currentTenantId;
 
-  const { data: commentsData, isLoading } = useQuery({
+  const { data: commentsData, isLoading, refetch } = useQuery({
     queryKey: ['pendingComments', tenantId, currentPage],
     queryFn: async () => {
       const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080';
@@ -25,8 +30,43 @@ const CommentModeration = () => {
       if (!response.ok) throw new Error('Failed to fetch comments');
       return response.json();
     },
-    enabled: !!tenantId
+    enabled: !!tenantId,
+    refetchInterval: 15000, // Refresh every 15 seconds for pending comments
+    staleTime: 5000 // Consider data stale after 5 seconds
   });
+  
+  // Auto-refresh when notifications change (real-time updates)
+  useEffect(() => {
+    if (tenantId) {
+      const commentNotifications = notifications.filter(n => 
+        n.type === 'COMMENT' || n.title?.toLowerCase().includes('comment')
+      );
+      if (commentNotifications.length > 0) {
+        const timer = setTimeout(() => {
+          queryClient.invalidateQueries(['pendingComments', tenantId]);
+        }, 1000);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [notifications.length, tenantId, queryClient]);
+  
+  // Listen for real-time comment updates
+  useEffect(() => {
+    if (!connected || !tenantId) return;
+    
+    const cleanup = addEventListener('comments', (update) => {
+      console.log('Received comments update:', update);
+      queryClient.invalidateQueries(['pendingComments', tenantId]);
+    });
+    
+    return cleanup;
+  }, [connected, tenantId, addEventListener, queryClient]);
+  
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await refetch();
+    setIsRefreshing(false);
+  };
 
   const approveMutation = useMutation({
     mutationFn: async (commentId) => {
@@ -97,15 +137,42 @@ const CommentModeration = () => {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <MessageCircle className="w-8 h-8 text-blue-600" />
+            <div className="relative">
+              <MessageCircle className="w-8 h-8 text-blue-600" />
+              {commentsData?.totalElements > 0 && (
+                <div className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                  {commentsData.totalElements > 99 ? '99+' : commentsData.totalElements}
+                </div>
+              )}
+            </div>
             <div>
               <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
                 Comment Moderation
               </h1>
               <p className="text-gray-600 dark:text-gray-400">
-                Review and moderate pending comments
+                {commentsData?.totalElements > 0 
+                  ? `${commentsData.totalElements} pending comment${commentsData.totalElements !== 1 ? 's' : ''} awaiting review`
+                  : 'Review and moderate pending comments'
+                }
               </p>
             </div>
+          </div>
+          
+          <div className="flex items-center space-x-3">
+            {connected && (
+              <div className="flex items-center space-x-1 text-xs text-accent-success">
+                <div className="w-2 h-2 bg-accent-success rounded-full animate-pulse"></div>
+                <span>Live Updates</span>
+              </div>
+            )}
+            <button
+              onClick={handleRefresh}
+              disabled={isRefreshing}
+              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
+            >
+              <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+              Refresh
+            </button>
           </div>
         </div>
 
@@ -121,12 +188,14 @@ const CommentModeration = () => {
           </div>
         ) : !commentsData?.content?.length ? (
           <div className="bg-white dark:bg-gray-800 rounded-lg p-12 text-center">
-            <MessageCircle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+            <div className="w-16 h-16 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Check className="w-8 h-8 text-green-600 dark:text-green-400" />
+            </div>
             <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
               No pending comments
             </h3>
             <p className="text-gray-600 dark:text-gray-400">
-              All comments have been reviewed and moderated.
+              All comments have been reviewed and moderated. Great job keeping your community engaged!
             </p>
           </div>
         ) : (

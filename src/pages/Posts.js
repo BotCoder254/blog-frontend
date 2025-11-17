@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { 
   PlusCircle, 
   Search, 
@@ -11,9 +11,12 @@ import {
   Trash2, 
   Calendar,
   User,
-  MoreHorizontal
+  MoreHorizontal,
+  RefreshCw
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { useNotifications } from '../contexts/NotificationContext';
+import { useRealTime } from '../contexts/RealTimeContext';
 import MainLayout from '../components/layout/MainLayout';
 import Button from '../components/ui/Button';
 import apiService from '../services/api';
@@ -21,11 +24,15 @@ import apiService from '../services/api';
 const Posts = () => {
   const navigate = useNavigate();
   const { currentTenant } = useAuth();
+  const { notifications } = useNotifications();
+  const { connected, addEventListener } = useRealTime();
   const [searchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const queryClient = useQueryClient();
 
-  const { data: postsData, isLoading } = useQuery({
+  const { data: postsData, isLoading, refetch } = useQuery({
     queryKey: ['posts', currentTenant?.id, statusFilter, searchParams.get('tag'), searchParams.get('category'), searchParams.get('author')],
     queryFn: () => {
       const params = {};
@@ -43,8 +50,38 @@ const Posts = () => {
       }
       return apiService.getPosts(currentTenant.id, params);
     },
-    enabled: !!currentTenant?.id
+    enabled: !!currentTenant?.id,
+    refetchInterval: 30000, // Refresh every 30 seconds
+    staleTime: 10000 // Consider data stale after 10 seconds
   });
+  
+  // Auto-refresh when notifications change (real-time updates)
+  useEffect(() => {
+    if (currentTenant?.id) {
+      const timer = setTimeout(() => {
+        queryClient.invalidateQueries(['posts', currentTenant.id]);
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [notifications.length, currentTenant?.id, queryClient]);
+  
+  // Listen for real-time post updates
+  useEffect(() => {
+    if (!connected || !currentTenant?.id) return;
+    
+    const cleanup = addEventListener('posts', (update) => {
+      console.log('Received posts update:', update);
+      queryClient.invalidateQueries(['posts', currentTenant.id]);
+    });
+    
+    return cleanup;
+  }, [connected, currentTenant?.id, addEventListener, queryClient]);
+  
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await refetch();
+    setIsRefreshing(false);
+  };
 
   const posts = postsData?.content || [];
 
@@ -96,10 +133,27 @@ const Posts = () => {
                'Manage your blog posts and content'}
             </p>
           </div>
-          <Button onClick={() => navigate('/posts/create')}>
-            <PlusCircle className="h-4 w-4 mr-2" />
-            New Post
-          </Button>
+          <div className="flex items-center space-x-3">
+            {connected && (
+              <div className="flex items-center space-x-1 text-xs text-accent-success">
+                <div className="w-2 h-2 bg-accent-success rounded-full animate-pulse"></div>
+                <span>Live Updates</span>
+              </div>
+            )}
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={handleRefresh}
+              disabled={isRefreshing}
+            >
+              <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
+              Refresh
+            </Button>
+            <Button onClick={() => navigate('/posts/create')}>
+              <PlusCircle className="h-4 w-4 mr-2" />
+              New Post
+            </Button>
+          </div>
         </div>
 
         {/* Filters */}

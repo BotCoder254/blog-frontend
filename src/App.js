@@ -5,6 +5,7 @@ import { HelmetProvider } from 'react-helmet-async';
 import { AuthProvider } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { NotificationProvider } from './contexts/NotificationContext';
+import { RealTimeProvider } from './contexts/RealTimeContext';
 import AuthPage from './pages/AuthPage';
 import OnboardingPage from './pages/OnboardingPage';
 import Dashboard from './pages/Dashboard';
@@ -41,6 +42,7 @@ function App() {
         <ThemeProvider>
           <AuthProvider>
             <NotificationProvider>
+              <RealTimeProvider>
             <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
               <div className="App">
                 <Routes>
@@ -169,6 +171,7 @@ function App() {
                 </Routes>
               </div>
             </Router>
+              </RealTimeProvider>
             </NotificationProvider>
           </AuthProvider>
         </ThemeProvider>
