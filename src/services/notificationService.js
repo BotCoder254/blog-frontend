@@ -15,7 +15,9 @@ class NotificationService {
   connect(userId, onNotificationReceived) {
     if (this.connected) return;
 
-    const socket = new SockJS(`${process.env.REACT_APP_API_URL || 'http://localhost:8080'}/ws`);
+    const baseUrl = process.env.REACT_APP_API_URL || 'http://localhost:8080';
+    const wsUrl = baseUrl.endsWith('/api') ? `${baseUrl}/ws` : `${baseUrl}/api/ws`;
+    const socket = new SockJS(wsUrl);
     this.stompClient = Stomp.over(socket);
 
     // Disable debug logging in production
@@ -77,7 +79,7 @@ class NotificationService {
 
   async getRecentNotifications(tenantId) {
     const response = await api.get(`/tenants/${tenantId}/notifications/recent`);
-    return response.data;
+    return response;
   }
 
   async getUnreadNotifications(tenantId) {
@@ -87,7 +89,7 @@ class NotificationService {
 
   async getUnreadCount(tenantId) {
     const response = await api.get(`/tenants/${tenantId}/notifications/unread/count`);
-    return response.data.count;
+    return response.count;
   }
 
   async markAsRead(tenantId, notificationId) {

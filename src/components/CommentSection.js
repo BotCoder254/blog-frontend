@@ -20,13 +20,20 @@ const CommentSection = ({ tenantSlug, postSlug }) => {
 
   const fetchComments = async () => {
     try {
-      const response = await fetch(`/api/public/tenants/${tenantSlug}/posts/${postSlug}/comments`);
+      const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080';
+      const BASE_URL = API_BASE_URL.endsWith('/api') ? API_BASE_URL : `${API_BASE_URL}/api`;
+      
+      const response = await fetch(`${BASE_URL}/public/tenants/${tenantSlug}/posts/${postSlug}/comments`);
       if (response.ok) {
         const data = await response.json();
         setComments(data);
+      } else if (response.status === 404) {
+        // Comments endpoint doesn't exist yet, set empty array
+        setComments([]);
       }
     } catch (error) {
       console.error('Error fetching comments:', error);
+      setComments([]);
     } finally {
       setLoading(false);
     }
@@ -38,7 +45,10 @@ const CommentSection = ({ tenantSlug, postSlug }) => {
 
     setSubmitting(true);
     try {
-      const response = await fetch(`/api/public/tenants/${tenantSlug}/posts/${postSlug}/comments`, {
+      const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080';
+      const BASE_URL = API_BASE_URL.endsWith('/api') ? API_BASE_URL : `${API_BASE_URL}/api`;
+      
+      const response = await fetch(`${BASE_URL}/public/tenants/${tenantSlug}/posts/${postSlug}/comments`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

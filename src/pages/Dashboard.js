@@ -28,6 +28,19 @@ const Dashboard = () => {
               <p className="text-gray-600 dark:text-gray-400">
                 Ready to create amazing content for <strong>{currentTenant?.name}</strong>?
               </p>
+              {currentTenant?.slug && (
+                <div className="mt-3 p-3 bg-accent-primary/10 rounded-lg">
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Your public blog:</p>
+                  <a 
+                    href={`${window.location.origin}/blog/${currentTenant.slug}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-accent-primary hover:underline font-medium"
+                  >
+                    {window.location.origin}/blog/{currentTenant.slug}
+                  </a>
+                </div>
+              )}
             </div>
             <Button 
               size="lg" 
@@ -145,9 +158,13 @@ const Dashboard = () => {
                 <PlusCircle className="h-4 w-4 mr-3" />
                 Create New Post
               </Button>
-              <Button variant="outline" className="w-full justify-start">
+              <Button 
+                variant="outline" 
+                className="w-full justify-start"
+                onClick={() => window.open(`/blog/${currentTenant?.slug}`, '_blank')}
+              >
                 <Eye className="h-4 w-4 mr-3" />
-                View Blog
+                View Public Blog
               </Button>
               <Button variant="outline" className="w-full justify-start">
                 <MessageCircle className="h-4 w-4 mr-3" />

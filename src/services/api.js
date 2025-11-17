@@ -145,6 +145,29 @@ class ApiService {
   async getMedia(tenantId, filename) {
     return this.request(`/tenants/${tenantId}/media/${filename}`);
   }
+
+  // HTTP method shortcuts
+  async get(endpoint) {
+    return this.request(endpoint, { method: 'GET' });
+  }
+
+  async post(endpoint, data) {
+    return this.request(endpoint, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async put(endpoint, data) {
+    return this.request(endpoint, {
+      method: 'PUT',
+      body: data ? JSON.stringify(data) : undefined,
+    });
+  }
+
+  async delete(endpoint) {
+    return this.request(endpoint, { method: 'DELETE' });
+  }
 }
 
 export default new ApiService();

@@ -12,6 +12,7 @@ import Posts from './pages/Posts';
 import PostEditor from './pages/PostEditor';
 import PublicBlog from './pages/PublicBlog';
 import PublicPost from './pages/PublicPost';
+
 import CommentModeration from './pages/CommentModeration';
 import MediaLibrary from './pages/MediaLibrary';
 import TagsPage from './pages/TagsPage';
@@ -40,99 +41,103 @@ function App() {
             <Router>
               <div className="App">
                 <Routes>
-                <Route path="/auth" element={<AuthPage />} />
-                <Route 
-                  path="/onboarding" 
-                  element={
-                    <ProtectedRoute>
-                      <OnboardingPage />
-                    </ProtectedRoute>
-                  } 
-                />
-                <Route 
-                  path="/dashboard" 
-                  element={
-                    <ProtectedRoute>
-                      <Dashboard />
-                    </ProtectedRoute>
-                  } 
-                />
-                <Route 
-                  path="/posts" 
-                  element={
-                    <ProtectedRoute>
-                      <Posts />
-                    </ProtectedRoute>
-                  } 
-                />
-                <Route 
-                  path="/posts/create" 
-                  element={
-                    <ProtectedRoute>
-                      <PostEditor />
-                    </ProtectedRoute>
-                  } 
-                />
-                <Route 
-                  path="/posts/edit/:postId" 
-                  element={
-                    <ProtectedRoute>
-                      <PostEditor />
-                    </ProtectedRoute>
-                  } 
-                />
-                <Route 
-                  path="/comments" 
-                  element={
-                    <ProtectedRoute>
-                      <CommentModeration />
-                    </ProtectedRoute>
-                  } 
-                />
-                <Route 
-                  path="/media" 
-                  element={
-                    <ProtectedRoute>
-                      <MediaLibrary />
-                    </ProtectedRoute>
-                  } 
-                />
-                <Route 
-                  path="/tags" 
-                  element={
-                    <ProtectedRoute>
-                      <TagsPage />
-                    </ProtectedRoute>
-                  } 
-                />
-                <Route 
-                  path="/categories" 
-                  element={
-                    <ProtectedRoute>
-                      <CategoriesPage />
-                    </ProtectedRoute>
-                  } 
-                />
-                <Route 
-                  path="/search" 
-                  element={
-                    <ProtectedRoute>
-                      <SearchResults />
-                    </ProtectedRoute>
-                  } 
-                />
-                <Route 
-                  path="/notifications" 
-                  element={
-                    <ProtectedRoute>
-                      <NotificationsPage />
-                    </ProtectedRoute>
-                  } 
-                />
-                {/* Public Routes */}
-                <Route path="/:tenantSlug" element={<PublicBlog />} />
-                <Route path="/:tenantSlug/posts/:slug" element={<PublicPost />} />
-                <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                  {/* Public Routes - No authentication required */}
+                  <Route path="/" element={<PublicBlog />} />
+                  <Route path="/blog/:tenantSlug" element={<PublicBlog />} />
+                  <Route path="/blog/:tenantSlug/posts/:slug" element={<PublicPost />} />
+                  
+                  {/* Auth Routes */}
+                  <Route path="/auth" element={<AuthPage />} />
+                  
+                  {/* Protected Routes - Authentication required */}
+                  <Route 
+                    path="/onboarding" 
+                    element={
+                      <ProtectedRoute>
+                        <OnboardingPage />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/dashboard" 
+                    element={
+                      <ProtectedRoute>
+                        <Dashboard />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/posts" 
+                    element={
+                      <ProtectedRoute>
+                        <Posts />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/posts/create" 
+                    element={
+                      <ProtectedRoute>
+                        <PostEditor />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/posts/edit/:postId" 
+                    element={
+                      <ProtectedRoute>
+                        <PostEditor />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/comments" 
+                    element={
+                      <ProtectedRoute>
+                        <CommentModeration />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/media" 
+                    element={
+                      <ProtectedRoute>
+                        <MediaLibrary />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/tags" 
+                    element={
+                      <ProtectedRoute>
+                        <TagsPage />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/categories" 
+                    element={
+                      <ProtectedRoute>
+                        <CategoriesPage />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/search" 
+                    element={
+                      <ProtectedRoute>
+                        <SearchResults />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/notifications" 
+                    element={
+                      <ProtectedRoute>
+                        <NotificationsPage />
+                      </ProtectedRoute>
+                    } 
+                  />
                 </Routes>
               </div>
             </Router>
