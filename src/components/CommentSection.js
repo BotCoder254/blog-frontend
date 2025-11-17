@@ -26,6 +26,7 @@ const CommentSection = ({ tenantSlug, postSlug }) => {
       const response = await fetch(`${BASE_URL}/public/tenants/${tenantSlug}/posts/${postSlug}/comments`);
       if (response.ok) {
         const data = await response.json();
+        console.log('Fetched comments:', data);
         setComments(data);
       } else if (response.status === 404) {
         // Comments endpoint doesn't exist yet, set empty array
@@ -59,17 +60,14 @@ const CommentSection = ({ tenantSlug, postSlug }) => {
       if (response.ok) {
         const newComment = await response.json();
         
-        // Add optimistic comment
-        const optimisticComment = {
-          ...newComment,
-          status: user ? 'APPROVED' : 'PENDING'
-        };
-        
-        setComments([...comments, optimisticComment]);
+        // Clear form
         setFormData({
           ...formData,
           body: ''
         });
+        
+        // Refresh comments to get the latest data
+        await fetchComments();
       }
     } catch (error) {
       console.error('Error submitting comment:', error);

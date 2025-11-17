@@ -12,9 +12,12 @@ const CommentModeration = () => {
   const { data: commentsData, isLoading } = useQuery({
     queryKey: ['pendingComments', user?.currentTenantId, currentPage],
     queryFn: async () => {
-      const response = await fetch(`/api/tenants/${user.currentTenantId}/comments?page=${currentPage}&size=10`, {
+      const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080';
+      const BASE_URL = API_BASE_URL.endsWith('/api') ? API_BASE_URL : `${API_BASE_URL}/api`;
+      
+      const response = await fetch(`${BASE_URL}/tenants/${user.currentTenantId}/comments?page=${currentPage}&size=10`, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`
         }
       });
       if (!response.ok) throw new Error('Failed to fetch comments');
@@ -25,10 +28,13 @@ const CommentModeration = () => {
 
   const approveMutation = useMutation({
     mutationFn: async (commentId) => {
-      const response = await fetch(`/api/tenants/${user.currentTenantId}/comments/${commentId}/approve`, {
+      const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080';
+      const BASE_URL = API_BASE_URL.endsWith('/api') ? API_BASE_URL : `${API_BASE_URL}/api`;
+      
+      const response = await fetch(`${BASE_URL}/tenants/${user.currentTenantId}/comments/${commentId}/approve`, {
         method: 'PUT',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`
         }
       });
       if (!response.ok) throw new Error('Failed to approve comment');
@@ -40,10 +46,13 @@ const CommentModeration = () => {
 
   const rejectMutation = useMutation({
     mutationFn: async (commentId) => {
-      const response = await fetch(`/api/tenants/${user.currentTenantId}/comments/${commentId}/reject`, {
+      const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080';
+      const BASE_URL = API_BASE_URL.endsWith('/api') ? API_BASE_URL : `${API_BASE_URL}/api`;
+      
+      const response = await fetch(`${BASE_URL}/tenants/${user.currentTenantId}/comments/${commentId}/reject`, {
         method: 'PUT',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`
         }
       });
       if (!response.ok) throw new Error('Failed to reject comment');
@@ -55,10 +64,13 @@ const CommentModeration = () => {
 
   const deleteMutation = useMutation({
     mutationFn: async (commentId) => {
-      const response = await fetch(`/api/tenants/${user.currentTenantId}/comments/${commentId}`, {
+      const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080';
+      const BASE_URL = API_BASE_URL.endsWith('/api') ? API_BASE_URL : `${API_BASE_URL}/api`;
+      
+      const response = await fetch(`${BASE_URL}/tenants/${user.currentTenantId}/comments/${commentId}`, {
         method: 'DELETE',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`
         }
       });
       if (!response.ok) throw new Error('Failed to delete comment');

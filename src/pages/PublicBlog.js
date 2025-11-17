@@ -13,7 +13,11 @@ import {
   Star,
   Eye,
   User,
-  Filter
+  Filter,
+  MessageCircle,
+  Heart,
+  Share2,
+  Bookmark
 } from 'lucide-react';
 import PublicHeader from '../components/PublicHeader';
 
@@ -296,55 +300,124 @@ const PublicBlog = () => {
                 <div className="h-px bg-gradient-to-r from-accent-primary to-transparent flex-1 ml-4"></div>
               </div>
               
-              <div className="space-y-6">
+              <div className="space-y-8">
                 {posts.map((post, index) => (
                   <motion.article
                     key={post.id}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.1 }}
-                    className="bg-light-surface1 dark:bg-dark-surface1 rounded-xl p-6 border border-light-border dark:border-dark-border hover:shadow-lg transition-all duration-300"
+                    className="bg-light-surface1 dark:bg-dark-surface1 rounded-xl overflow-hidden border border-light-border dark:border-dark-border hover:shadow-xl transition-all duration-300 group"
                   >
-                    <Link to={`/blog/${tenantSlug}/posts/${post.slug}`} className="block group">
-                      <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-3 group-hover:text-accent-primary transition-colors">
-                        {post.title}
-                      </h3>
-                    </Link>
+                    {/* Featured Image */}
+                    {post.featuredImage && (
+                      <div className="aspect-video w-full overflow-hidden">
+                        <Link to={`/blog/${tenantSlug}/posts/${post.slug}`}>
+                          <img
+                            src={post.featuredImage}
+                            alt={post.title}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          />
+                        </Link>
+                      </div>
+                    )}
                     
-                    {post.excerpt && (
-                      <p className="text-gray-600 dark:text-gray-400 mb-4 line-clamp-2">
-                        {post.excerpt}
-                      </p>
-                    )}
+                    <div className="p-6">
+                      {/* Categories/Tags */}
+                      {post.categories && post.categories.length > 0 && (
+                        <div className="flex flex-wrap gap-2 mb-3">
+                          {post.categories.slice(0, 2).map((category) => (
+                            <span
+                              key={category}
+                              className="px-3 py-1 text-xs font-medium bg-accent-secondary/10 text-accent-secondary rounded-full"
+                            >
+                              {category}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                      
+                      {/* Title */}
+                      <Link to={`/blog/${tenantSlug}/posts/${post.slug}`} className="block group">
+                        <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-3 group-hover:text-accent-primary transition-colors leading-tight">
+                          {post.title}
+                        </h3>
+                      </Link>
+                      
+                      {/* Excerpt */}
+                      {post.excerpt && (
+                        <p className="text-gray-600 dark:text-gray-400 mb-4 line-clamp-3 text-base leading-relaxed">
+                          {post.excerpt}
+                        </p>
+                      )}
 
-                    <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400 mb-4">
-                      <div className="flex items-center space-x-4">
-                        <span>{typeof post.author === 'string' ? post.author : `${post.author?.firstName || ''} ${post.author?.lastName || ''}`.trim() || 'Anonymous'}</span>
-                        <span>{formatDate(post.publishedAt)}</span>
-                        <span className="flex items-center space-x-1">
-                          <Clock className="w-3 h-3" />
-                          <span>{calculateReadTime(post.content)} min</span>
-                        </span>
+                      {/* Author Info */}
+                      <div className="flex items-center space-x-3 mb-4">
+                        <div className="w-10 h-10 bg-accent-primary rounded-full flex items-center justify-center text-white font-semibold">
+                          {(() => {
+                            const authorName = typeof post.author === 'string' ? post.author : `${post.author?.firstName || ''} ${post.author?.lastName || ''}`.trim() || 'Anonymous';
+                            return authorName.split(' ').map(n => n[0]).join('').slice(0, 2);
+                          })()}
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900 dark:text-white text-sm">
+                            {typeof post.author === 'string' ? post.author : `${post.author?.firstName || ''} ${post.author?.lastName || ''}`.trim() || 'Anonymous'}
+                          </p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">
+                            {formatDate(post.publishedAt)}
+                          </p>
+                        </div>
                       </div>
-                      <div className="flex items-center space-x-1">
-                        <Eye className="w-3 h-3" />
-                        <span>{post.views || 0}</span>
-                      </div>
-                    </div>
 
-                    {post.tags && post.tags.length > 0 && (
-                      <div className="flex flex-wrap gap-2">
-                        {post.tags.slice(0, 3).map((tag) => (
-                          <button
-                            key={tag}
-                            onClick={() => handleTagClick(tag)}
-                            className="px-2 py-1 text-xs bg-accent-primary/10 text-accent-primary rounded-full hover:bg-accent-primary/20 transition-colors"
-                          >
-                            #{tag}
+                      {/* Stats Row */}
+                      <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400 mb-4 py-3 border-t border-light-border dark:border-dark-border">
+                        <div className="flex items-center space-x-4">
+                          <span className="flex items-center space-x-1">
+                            <Clock className="w-4 h-4" />
+                            <span>{calculateReadTime(post.content)} min read</span>
+                          </span>
+                          <span className="flex items-center space-x-1">
+                            <Eye className="w-4 h-4" />
+                            <span>{post.views || 0} views</span>
+                          </span>
+                          <span className="flex items-center space-x-1">
+                            <MessageCircle className="w-4 h-4" />
+                            <span>{post.commentsCount || 0} comments</span>
+                          </span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <button className="p-2 hover:bg-light-hover dark:hover:bg-dark-hover rounded-lg transition-colors">
+                            <Heart className="w-4 h-4" />
                           </button>
-                        ))}
+                          <button className="p-2 hover:bg-light-hover dark:hover:bg-dark-hover rounded-lg transition-colors">
+                            <Bookmark className="w-4 h-4" />
+                          </button>
+                          <button className="p-2 hover:bg-light-hover dark:hover:bg-dark-hover rounded-lg transition-colors">
+                            <Share2 className="w-4 h-4" />
+                          </button>
+                        </div>
                       </div>
-                    )}
+
+                      {/* Tags */}
+                      {post.tags && post.tags.length > 0 && (
+                        <div className="flex flex-wrap gap-2">
+                          {post.tags.slice(0, 4).map((tag) => (
+                            <button
+                              key={tag}
+                              onClick={() => handleTagClick(tag)}
+                              className="px-3 py-1 text-xs bg-accent-primary/10 text-accent-primary rounded-full hover:bg-accent-primary/20 transition-colors font-medium"
+                            >
+                              #{tag}
+                            </button>
+                          ))}
+                          {post.tags.length > 4 && (
+                            <span className="px-3 py-1 text-xs text-gray-500 dark:text-gray-400">
+                              +{post.tags.length - 4} more
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   </motion.article>
                 ))}
               </div>
