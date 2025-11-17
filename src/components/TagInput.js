@@ -19,7 +19,11 @@ const TagInput = ({ tags = [], onChange, placeholder = "Add tags..." }) => {
   const fetchSuggestions = async (query) => {
     try {
       const tenantId = localStorage.getItem('currentTenantId');
-      const response = await fetch(`/api/tenants/${tenantId}/tags?query=${encodeURIComponent(query)}`);
+      const response = await fetch(`/api/tenants/${tenantId}/tags?query=${encodeURIComponent(query)}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
       if (response.ok) {
         const data = await response.json();
         setSuggestions(data.filter(tag => !tags.includes(tag)));

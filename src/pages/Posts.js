@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { 
   PlusCircle, 
@@ -21,15 +21,22 @@ import apiService from '../services/api';
 const Posts = () => {
   const navigate = useNavigate();
   const { currentTenant } = useAuth();
+  const [searchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
 
   const { data: postsData, isLoading } = useQuery({
-    queryKey: ['posts', currentTenant?.id, statusFilter],
+    queryKey: ['posts', currentTenant?.id, statusFilter, searchParams.get('tag'), searchParams.get('category')],
     queryFn: () => {
       const params = {};
       if (statusFilter !== 'all') {
         params.status = statusFilter.toUpperCase();
+      }
+      if (searchParams.get('tag')) {
+        params.tag = searchParams.get('tag');
+      }
+      if (searchParams.get('category')) {
+        params.category = searchParams.get('category');
       }
       return apiService.getPosts(currentTenant.id, params);
     },
@@ -80,7 +87,9 @@ const Posts = () => {
           <div>
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Posts</h1>
             <p className="text-gray-600 dark:text-gray-400 mt-1">
-              Manage your blog posts and content
+              {searchParams.get('tag') ? `Tagged with "${searchParams.get('tag')}"` :
+               searchParams.get('category') ? `Category: ${searchParams.get('category')}` :
+               'Manage your blog posts and content'}
             </p>
           </div>
           <Button onClick={() => navigate('/posts/create')}>

@@ -13,6 +13,8 @@ import PublicBlog from './pages/PublicBlog';
 import PublicPost from './pages/PublicPost';
 import CommentModeration from './pages/CommentModeration';
 import MediaLibrary from './pages/MediaLibrary';
+import TagsPage from './pages/TagsPage';
+import CategoriesPage from './pages/CategoriesPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import './index.css';
 
@@ -88,6 +90,22 @@ function App() {
                   element={
                     <ProtectedRoute>
                       <MediaLibrary />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/tags" 
+                  element={
+                    <ProtectedRoute>
+                      <TagsPage />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/categories" 
+                  element={
+                    <ProtectedRoute>
+                      <CategoriesPage />
                     </ProtectedRoute>
                   } 
                 />
