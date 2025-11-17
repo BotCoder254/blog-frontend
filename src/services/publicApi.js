@@ -66,6 +66,19 @@ export const publicApi = {
     return response.json();
   },
 
+  // Get tenant information
+  getTenant: async (tenantSlug) => {
+    const response = await fetch(
+      `${BASE_URL}/public/tenants/${tenantSlug}`
+    );
+    
+    if (!response.ok) {
+      throw new Error(`Failed to fetch tenant: ${response.status}`);
+    }
+    
+    return response.json();
+  },
+
   // Get RSS feed URL
   getRSSUrl: (tenantSlug) => {
     return `${BASE_URL}/public/tenants/${tenantSlug}/rss.xml`;

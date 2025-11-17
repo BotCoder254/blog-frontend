@@ -40,12 +40,21 @@ export const NotificationProvider = ({ children }) => {
   // Connect to WebSocket when user is authenticated
   useEffect(() => {
     if (user?.id && tenantId) {
-      notificationService.connect(user.id, handleNotificationReceived);
+      try {
+        notificationService.connect(user.id, handleNotificationReceived);
+      } catch (error) {
+        console.warn('WebSocket connection failed, continuing without real-time notifications:', error);
+      }
+      
       loadRecentNotifications();
       loadUnreadCount();
 
       return () => {
-        notificationService.disconnect();
+        try {
+          notificationService.disconnect();
+        } catch (error) {
+          console.warn('WebSocket disconnect error:', error);
+        }
       };
     }
   }, [user?.id, tenantId, handleNotificationReceived]);
@@ -58,20 +67,14 @@ export const NotificationProvider = ({ children }) => {
   }, []);
 
   const loadRecentNotifications = async () => {
-    if (!tenantId) {
-      console.log('No tenantId available for loading notifications');
-      return;
-    }
+    if (!tenantId) return;
     
-    console.log('Loading recent notifications for tenant:', tenantId);
     try {
       setIsLoading(true);
       const data = await notificationService.getRecentNotifications(tenantId);
-      console.log('Loaded notifications:', data);
-      console.log('Setting notifications state to:', data || []);
       setNotifications(data || []);
     } catch (error) {
-      console.error('Failed to load notifications:', error);
+      console.warn('Failed to load notifications:', error.message);
       setNotifications([]);
     } finally {
       setIsLoading(false);

@@ -16,7 +16,8 @@ import {
   ChevronRight,
   LogOut,
   Sparkles,
-  Bell
+  Bell,
+  Search
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -55,9 +56,8 @@ const Sidebar = ({ collapsed, onToggleCollapse, isMobile, onClose }) => {
     {
       group: 'Settings',
       items: [
-        { icon: Settings, label: 'Blog Settings', path: '/settings' },
-        { icon: Sparkles, label: 'Appearance', path: '/appearance' },
-        { icon: HelpCircle, label: 'Help', path: '/help' },
+        { icon: Search, label: 'SEO & Visibility', path: '/seo' },
+        { icon: HelpCircle, label: 'SEO Help', path: '/help' },
       ]
     }
   ];

@@ -26,13 +26,27 @@ const PublicPost = () => {
   const { tenantSlug, slug } = useParams();
   const [post, setPost] = useState(null);
   const [relatedPosts, setRelatedPosts] = useState([]);
+  const [tenantData, setTenantData] = useState(null);
+  const [seoSettings, setSeoSettings] = useState(null);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
+    fetchTenantData();
     fetchPost();
     fetchRelatedPosts();
   }, [tenantSlug, slug]);
+
+  const fetchTenantData = async () => {
+    try {
+      const { default: publicApi } = await import('../services/publicApi');
+      const tenantInfo = await publicApi.getTenant(tenantSlug);
+      setTenantData(tenantInfo);
+      setSeoSettings(tenantInfo?.settings?.seo || {});
+    } catch (error) {
+      console.error('Error fetching tenant data:', error);
+    }
+  };
 
   const fetchPost = async () => {
     try {
@@ -126,24 +140,56 @@ const PublicPost = () => {
   return (
     <>
       <Helmet>
-        <title>{`${post.title || 'Article'} - ${tenantSlug || 'Sprilliblo'}`}</title>
-        <meta name="description" content={post.excerpt || `Read ${post.title || 'this article'} on ${tenantSlug || 'Sprilliblo'} blog`} />
+        <title>{`${post.title || 'Article'} - ${tenantData?.name || tenantSlug || 'Sprilliblo'}`}</title>
+        <meta name="description" content={post.excerpt || `Read ${post.title || 'this article'} on ${tenantData?.name || tenantSlug || 'Sprilliblo'} blog`} />
         <meta name="author" content={typeof post.author === 'string' ? post.author : `${post.author?.firstName || ''} ${post.author?.lastName || ''}`.trim() || 'Anonymous'} />
-        <meta property="og:title" content={post.title || 'Article'} />
-        <meta property="og:description" content={post.excerpt || `Read ${post.title || 'this article'} on ${tenantSlug || 'Sprilliblo'} blog`} />
+        {seoSettings?.metaKeywords && <meta name="keywords" content={seoSettings.metaKeywords} />}
+        
+        {/* Open Graph */}
+        <meta property="og:title" content={seoSettings?.ogTitle || post.title || 'Article'} />
+        <meta property="og:description" content={seoSettings?.ogDescription || post.excerpt || `Read ${post.title || 'this article'} on ${tenantData?.name || tenantSlug || 'Sprilliblo'} blog`} />
         <meta property="og:type" content="article" />
         <meta property="og:url" content={shareUrl} />
-        {post.featuredImage && <meta property="og:image" content={post.featuredImage} />}
+        <meta property="og:image" content={seoSettings?.ogImage || post.featuredImage || '/logo512.png'} />
         <meta property="article:author" content={typeof post.author === 'string' ? post.author : `${post.author?.firstName || ''} ${post.author?.lastName || ''}`.trim() || 'Anonymous'} />
         <meta property="article:published_time" content={post.publishedAt} />
         {post.tags && post.tags.map(tag => (
           <meta key={tag} property="article:tag" content={tag} />
         ))}
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content={post.title || 'Article'} />
-        <meta name="twitter:description" content={post.excerpt || 'Read this article'} />
-        {post.featuredImage && <meta name="twitter:image" content={post.featuredImage} />}
-        <link rel="canonical" href={shareUrl} />
+        
+        {/* Twitter */}
+        <meta name="twitter:card" content={seoSettings?.twitterCard || 'summary_large_image'} />
+        <meta name="twitter:title" content={seoSettings?.twitterTitle || seoSettings?.ogTitle || post.title || 'Article'} />
+        <meta name="twitter:description" content={seoSettings?.twitterDescription || seoSettings?.ogDescription || post.excerpt || 'Read this article'} />
+        <meta name="twitter:image" content={seoSettings?.twitterImage || seoSettings?.ogImage || post.featuredImage || '/logo512.png'} />
+        
+        {/* SEO */}
+        {seoSettings?.indexable === false && <meta name="robots" content="noindex" />}
+        {seoSettings?.followLinks === false && <meta name="robots" content="nofollow" />}
+        {seoSettings?.canonicalUrl ? (
+          <link rel="canonical" href={`${seoSettings.canonicalUrl}/posts/${slug}`} />
+        ) : (
+          <link rel="canonical" href={shareUrl} />
+        )}
+        
+        {/* Structured Data */}
+        {seoSettings?.structuredData && (
+          <script type="application/ld+json">
+            {JSON.stringify({
+              ...JSON.parse(seoSettings.structuredData),
+              "@type": "BlogPosting",
+              "headline": post.title,
+              "description": post.excerpt,
+              "author": {
+                "@type": "Person",
+                "name": typeof post.author === 'string' ? post.author : `${post.author?.firstName || ''} ${post.author?.lastName || ''}`.trim() || 'Anonymous'
+              },
+              "datePublished": post.publishedAt,
+              "url": shareUrl,
+              "image": post.featuredImage
+            })}
+          </script>
+        )}
       </Helmet>
 
       <div className="min-h-screen bg-light-bg dark:bg-dark-bg">

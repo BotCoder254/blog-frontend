@@ -15,38 +15,45 @@ class NotificationService {
   connect(userId, onNotificationReceived) {
     if (this.connected) return;
 
-    const baseUrl = process.env.REACT_APP_API_URL || 'http://localhost:8080';
-    const wsUrl = baseUrl.endsWith('/api') ? `${baseUrl}/ws` : `${baseUrl}/api/ws`;
-    const socket = new SockJS(wsUrl);
-    this.stompClient = Stomp.over(socket);
+    try {
+      const baseUrl = process.env.REACT_APP_API_URL || 'http://localhost:8080';
+      const wsUrl = baseUrl.endsWith('/api') ? `${baseUrl}/ws` : `${baseUrl}/api/ws`;
+      const socket = new SockJS(wsUrl);
+      this.stompClient = Stomp.over(socket);
 
-    // Disable debug logging in production
-    this.stompClient.debug = process.env.NODE_ENV === 'development' ? console.log : () => {};
+      // Disable debug logging in production
+      this.stompClient.debug = process.env.NODE_ENV === 'development' ? console.log : () => {};
 
-    this.stompClient.connect(
-      {},
-      () => {
-        this.connected = true;
-        this.reconnectAttempts = 0;
-        console.log('WebSocket connected');
+      this.stompClient.connect(
+        {},
+        () => {
+          this.connected = true;
+          this.reconnectAttempts = 0;
+          console.log('WebSocket connected');
 
-        // Subscribe to user-specific notifications
-        const subscription = this.stompClient.subscribe(
-          `/user/${userId}/queue/notifications`,
-          (message) => {
-            const notification = JSON.parse(message.body);
-            onNotificationReceived(notification);
+          // Subscribe to user-specific notifications
+          const subscription = this.stompClient.subscribe(
+            `/user/${userId}/queue/notifications`,
+            (message) => {
+              const notification = JSON.parse(message.body);
+              onNotificationReceived(notification);
+            }
+          );
+
+          this.subscriptions.set(userId, subscription);
+        },
+        (error) => {
+          console.warn('WebSocket connection failed, continuing without real-time notifications:', error);
+          this.connected = false;
+          // Don't attempt reconnect for 403 errors
+          if (!error.toString().includes('403')) {
+            this.handleReconnect(userId, onNotificationReceived);
           }
-        );
-
-        this.subscriptions.set(userId, subscription);
-      },
-      (error) => {
-        console.error('WebSocket connection error:', error);
-        this.connected = false;
-        this.handleReconnect(userId, onNotificationReceived);
-      }
-    );
+        }
+      );
+    } catch (error) {
+      console.warn('WebSocket initialization failed:', error);
+    }
   }
 
   disconnect() {
@@ -78,8 +85,13 @@ class NotificationService {
   }
 
   async getRecentNotifications(tenantId) {
-    const response = await api.get(`/tenants/${tenantId}/notifications/recent`);
-    return response;
+    try {
+      const response = await api.get(`/tenants/${tenantId}/notifications/recent`);
+      return response;
+    } catch (error) {
+      console.warn('Failed to fetch recent notifications:', error.message);
+      return [];
+    }
   }
 
   async getUnreadNotifications(tenantId) {
@@ -88,8 +100,13 @@ class NotificationService {
   }
 
   async getUnreadCount(tenantId) {
-    const response = await api.get(`/tenants/${tenantId}/notifications/unread/count`);
-    return response.count;
+    try {
+      const response = await api.get(`/tenants/${tenantId}/notifications/unread/count`);
+      return response.count || 0;
+    } catch (error) {
+      console.warn('Failed to fetch unread count:', error.message);
+      return 0;
+    }
   }
 
   async markAsRead(tenantId, notificationId) {

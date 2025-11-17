@@ -2,7 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { PlusCircle, TrendingUp, Eye, MessageCircle, Users } from 'lucide-react';
+import { PlusCircle, TrendingUp, Eye, MessageCircle, Users, Search, HelpCircle } from 'lucide-react';
 import Button from '../components/ui/Button';
 import MainLayout from '../components/layout/MainLayout';
 
@@ -170,9 +170,21 @@ const Dashboard = () => {
                 <MessageCircle className="h-4 w-4 mr-3" />
                 Moderate Comments
               </Button>
-              <Button variant="outline" className="w-full justify-start">
-                <Users className="h-4 w-4 mr-3" />
-                Manage Users
+              <Button 
+                variant="outline" 
+                className="w-full justify-start"
+                onClick={() => navigate('/seo')}
+              >
+                <Search className="h-4 w-4 mr-3" />
+                Configure SEO Settings
+              </Button>
+              <Button 
+                variant="outline" 
+                className="w-full justify-start"
+                onClick={() => navigate('/help')}
+              >
+                <HelpCircle className="h-4 w-4 mr-3" />
+                SEO Help & Guides
               </Button>
             </div>
           </div>

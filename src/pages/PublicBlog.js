@@ -34,6 +34,8 @@ const PublicBlog = () => {
   const [totalPages, setTotalPages] = useState(0);
   const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '');
   const [selectedTag, setSelectedTag] = useState(searchParams.get('tag') || '');
+  const [tenantData, setTenantData] = useState(null);
+  const [seoSettings, setSeoSettings] = useState(null);
 
   useEffect(() => {
     fetchAllData();
@@ -55,6 +57,14 @@ const PublicBlog = () => {
         setPopularTags([]);
         return;
       }
+      
+      // Fetch tenant data and SEO settings
+      const [tenantInfo] = await Promise.all([
+        publicApi.getTenant(tenantSlug)
+      ]);
+      
+      setTenantData(tenantInfo);
+      setSeoSettings(tenantInfo?.settings?.seo || {});
       
       // Fetch main posts
       const params = { page: currentPage, size: 12 };
@@ -95,6 +105,8 @@ const PublicBlog = () => {
       setTrendingPosts([]);
       setRecentPosts([]);
       setPopularTags([]);
+      setTenantData(null);
+      setSeoSettings(null);
     } finally {
       setLoading(false);
     }
@@ -160,13 +172,35 @@ const PublicBlog = () => {
   return (
     <>
       <Helmet>
-        <title>{tenantSlug ? `${tenantSlug} - Modern Blog Magazine` : 'Sprilliblo - Modern Blog Platform'}</title>
-        <meta name="description" content={tenantSlug ? `Discover the latest stories, insights, and expertise from ${tenantSlug}. A modern magazine-style blog with trending articles and expert content.` : 'Discover amazing stories and insights on Sprilliblo, a modern blog platform.'} />
-        <meta property="og:title" content={tenantSlug ? `${tenantSlug} - Modern Blog Magazine` : 'Sprilliblo - Modern Blog Platform'} />
-        <meta property="og:description" content={tenantSlug ? `Discover the latest stories, insights, and expertise from ${tenantSlug}` : 'Discover amazing stories and insights on Sprilliblo'} />
+        <title>{seoSettings?.metaTitle || (tenantData?.name ? `${tenantData.name} - Blog` : (tenantSlug ? `${tenantSlug} - Modern Blog Magazine` : 'Sprilliblo - Modern Blog Platform'))}</title>
+        <meta name="description" content={seoSettings?.metaDescription || (tenantData?.description || (tenantSlug ? `Discover the latest stories, insights, and expertise from ${tenantSlug}. A modern magazine-style blog with trending articles and expert content.` : 'Discover amazing stories and insights on Sprilliblo, a modern blog platform.'))} />
+        {seoSettings?.metaKeywords && <meta name="keywords" content={seoSettings.metaKeywords} />}
+        
+        {/* Open Graph */}
+        <meta property="og:title" content={seoSettings?.ogTitle || seoSettings?.metaTitle || (tenantData?.name ? `${tenantData.name} - Blog` : (tenantSlug ? `${tenantSlug} - Modern Blog Magazine` : 'Sprilliblo - Modern Blog Platform'))} />
+        <meta property="og:description" content={seoSettings?.ogDescription || seoSettings?.metaDescription || (tenantData?.description || (tenantSlug ? `Discover the latest stories, insights, and expertise from ${tenantSlug}` : 'Discover amazing stories and insights on Sprilliblo'))} />
         <meta property="og:type" content="website" />
-        <meta property="og:image" content={featuredPost?.featuredImage || '/logo512.png'} />
-        {tenantSlug && <link rel="canonical" href={`https://${tenantSlug}.sprilliblo.com`} />}
+        <meta property="og:image" content={seoSettings?.ogImage || featuredPost?.featuredImage || '/logo512.png'} />
+        {tenantSlug && <meta property="og:url" content={`https://${tenantSlug}.sprilliblo.com`} />}
+        
+        {/* Twitter */}
+        <meta name="twitter:card" content={seoSettings?.twitterCard || 'summary_large_image'} />
+        <meta name="twitter:title" content={seoSettings?.twitterTitle || seoSettings?.ogTitle || seoSettings?.metaTitle || (tenantData?.name ? `${tenantData.name} - Blog` : (tenantSlug ? `${tenantSlug} - Modern Blog Magazine` : 'Sprilliblo - Modern Blog Platform'))} />
+        <meta name="twitter:description" content={seoSettings?.twitterDescription || seoSettings?.ogDescription || seoSettings?.metaDescription || (tenantData?.description || (tenantSlug ? `Discover the latest stories, insights, and expertise from ${tenantSlug}` : 'Discover amazing stories and insights on Sprilliblo'))} />
+        <meta name="twitter:image" content={seoSettings?.twitterImage || seoSettings?.ogImage || featuredPost?.featuredImage || '/logo512.png'} />
+        
+        {/* SEO */}
+        {seoSettings?.indexable === false && <meta name="robots" content="noindex" />}
+        {seoSettings?.followLinks === false && <meta name="robots" content="nofollow" />}
+        {seoSettings?.canonicalUrl && <link rel="canonical" href={seoSettings.canonicalUrl} />}
+        {!seoSettings?.canonicalUrl && tenantSlug && <link rel="canonical" href={`https://${tenantSlug}.sprilliblo.com`} />}
+        
+        {/* Structured Data */}
+        {seoSettings?.structuredData && (
+          <script type="application/ld+json">
+            {seoSettings.structuredData}
+          </script>
+        )}
       </Helmet>
 
       <div className="min-h-screen bg-light-bg dark:bg-dark-bg">

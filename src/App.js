@@ -19,6 +19,9 @@ import TagsPage from './pages/TagsPage';
 import CategoriesPage from './pages/CategoriesPage';
 import SearchResults from './pages/SearchResults';
 import NotificationsPage from './pages/NotificationsPage';
+import SeoSettings from './pages/SeoSettings';
+import Settings from './pages/Settings';
+import Help from './pages/Help';
 import ProtectedRoute from './components/ProtectedRoute';
 import './index.css';
 
@@ -38,7 +41,7 @@ function App() {
         <ThemeProvider>
           <AuthProvider>
             <NotificationProvider>
-            <Router>
+            <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
               <div className="App">
                 <Routes>
                   {/* Public Routes - No authentication required */}
@@ -135,6 +138,31 @@ function App() {
                     element={
                       <ProtectedRoute>
                         <NotificationsPage />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/seo" 
+                    element={
+                      <ProtectedRoute>
+                        <SeoSettings />
+                      </ProtectedRoute>
+                    } 
+                  />
+
+                  <Route 
+                    path="/settings" 
+                    element={
+                      <ProtectedRoute>
+                        <Settings />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/help" 
+                    element={
+                      <ProtectedRoute>
+                        <Help />
                       </ProtectedRoute>
                     } 
                   />

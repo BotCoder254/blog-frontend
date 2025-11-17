@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 const Input = forwardRef(({ 
   label, 
   error, 
+  helperText,
   icon: Icon, 
   className = '', 
   ...props 
@@ -46,6 +47,11 @@ const Input = forwardRef(({
         >
           {error}
         </motion.p>
+      )}
+      {helperText && !error && (
+        <p className="text-sm text-gray-500 dark:text-gray-400">
+          {helperText}
+        </p>
       )}
     </div>
   );
