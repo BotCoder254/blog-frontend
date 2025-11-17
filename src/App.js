@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { HelmetProvider } from 'react-helmet-async';
 import { AuthProvider } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
+import { NotificationProvider } from './contexts/NotificationContext';
 import AuthPage from './pages/AuthPage';
 import OnboardingPage from './pages/OnboardingPage';
 import Dashboard from './pages/Dashboard';
@@ -16,6 +17,7 @@ import MediaLibrary from './pages/MediaLibrary';
 import TagsPage from './pages/TagsPage';
 import CategoriesPage from './pages/CategoriesPage';
 import SearchResults from './pages/SearchResults';
+import NotificationsPage from './pages/NotificationsPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import './index.css';
 
@@ -34,6 +36,7 @@ function App() {
       <HelmetProvider>
         <ThemeProvider>
           <AuthProvider>
+            <NotificationProvider>
             <Router>
               <div className="App">
                 <Routes>
@@ -118,6 +121,14 @@ function App() {
                     </ProtectedRoute>
                   } 
                 />
+                <Route 
+                  path="/notifications" 
+                  element={
+                    <ProtectedRoute>
+                      <NotificationsPage />
+                    </ProtectedRoute>
+                  } 
+                />
                 {/* Public Routes */}
                 <Route path="/:tenantSlug" element={<PublicBlog />} />
                 <Route path="/:tenantSlug/posts/:slug" element={<PublicPost />} />
@@ -125,6 +136,7 @@ function App() {
                 </Routes>
               </div>
             </Router>
+            </NotificationProvider>
           </AuthProvider>
         </ThemeProvider>
       </HelmetProvider>

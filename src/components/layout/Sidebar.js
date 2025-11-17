@@ -15,7 +15,8 @@ import {
   ChevronLeft,
   ChevronRight,
   LogOut,
-  Sparkles
+  Sparkles,
+  Bell
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -41,6 +42,7 @@ const Sidebar = ({ collapsed, onToggleCollapse, isMobile, onClose }) => {
       group: 'Community',
       items: [
         { icon: MessageCircle, label: 'Comments', path: '/comments' },
+        { icon: Bell, label: 'Notifications', path: '/notifications' },
         { icon: Users, label: 'Users', path: '/users', adminOnly: true },
       ]
     },

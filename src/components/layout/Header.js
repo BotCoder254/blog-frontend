@@ -1,22 +1,27 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { 
-  Bell, 
   Menu, 
   Sun, 
   Moon,
-  Plus
+  Plus,
+  Bell
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useNavigate } from 'react-router-dom';
 import SearchInput from '../SearchInput';
 import MobileSearch from '../MobileSearch';
+import NotificationDropdown from '../NotificationDropdown';
+import MobileNotifications from '../MobileNotifications';
+import { useNotifications } from '../../contexts/NotificationContext';
 
 const Header = ({ onMobileMenuToggle, isMobile }) => {
   const { user, currentTenant } = useAuth();
   const { isDark, toggleTheme } = useTheme();
+  const { unreadCount } = useNotifications();
   const navigate = useNavigate();
+  const [mobileNotificationsOpen, setMobileNotificationsOpen] = useState(false);
 
   return (
     <header className="bg-light-surface1 dark:bg-dark-surface1 border-b border-light-border dark:border-dark-border">
@@ -57,6 +62,27 @@ const Header = ({ onMobileMenuToggle, isMobile }) => {
             {/* Mobile Search */}
             {isMobile && <MobileSearch />}
             
+            {/* Mobile Notifications */}
+            {isMobile && (
+              <button
+                onClick={() => setMobileNotificationsOpen(true)}
+                className="relative p-2 rounded-lg hover:bg-light-hover dark:hover:bg-dark-hover transition-colors"
+              >
+                <Bell className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                {unreadCount > 0 && (
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    className="absolute -top-1 -right-1 w-5 h-5 bg-accent-error rounded-full flex items-center justify-center"
+                  >
+                    <span className="text-white text-xs font-medium">
+                      {unreadCount > 99 ? '99+' : unreadCount}
+                    </span>
+                  </motion.div>
+                )}
+              </button>
+            )}
+            
             {/* Create Post Button - Mobile */}
             {isMobile && (
               <motion.button
@@ -80,11 +106,8 @@ const Header = ({ onMobileMenuToggle, isMobile }) => {
               )}
             </button>
 
-            {/* Notifications */}
-            <button className="relative p-2 rounded-lg hover:bg-light-hover dark:hover:bg-dark-hover transition-colors">
-              <Bell className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-              <div className="absolute -top-1 -right-1 w-3 h-3 bg-accent-error rounded-full border-2 border-light-surface1 dark:border-dark-surface1" />
-            </button>
+            {/* Notifications - Desktop only */}
+            {!isMobile && <NotificationDropdown />}
 
             {/* Profile - Desktop only */}
             {!isMobile && (
@@ -107,6 +130,12 @@ const Header = ({ onMobileMenuToggle, isMobile }) => {
           </div>
         </div>
       </div>
+      
+      {/* Mobile Notifications Overlay */}
+      <MobileNotifications 
+        isOpen={mobileNotificationsOpen}
+        onClose={() => setMobileNotificationsOpen(false)}
+      />
     </header>
   );
 };
